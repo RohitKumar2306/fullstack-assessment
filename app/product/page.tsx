@@ -17,6 +17,7 @@ interface Product {
   imageUrls: string[];
   featureBullets: string[];
   retailerSku: string;
+  retailPrice: number;
 }
 
 export default function ProductPage() {
@@ -35,6 +36,11 @@ export default function ProductPage() {
       }
     }
   }, [productParam]);
+
+  const formattedPrice = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+  }).format(product?.retailPrice ?? 0);
 
   if (!product) {
     return (
@@ -114,8 +120,8 @@ export default function ProductPage() {
               </div>
               <h1 className="text-3xl font-bold mb-2">{product.title}</h1>
               <p className="text-sm text-muted-foreground">SKU: {product.retailerSku}</p>
+              <p className="text-2xl font-semibold text-primary">{formattedPrice}</p>
             </div>
-
             {product.featureBullets.length > 0 && (
               <Card>
                 <CardContent className="pt-6">
