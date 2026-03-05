@@ -27,23 +27,59 @@ export default function ProductPage() {
   const [product, setProduct] = useState<Product | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [productError, setProductError] = useState("");
 
-  useEffect(() => {
-      if (!sku) {
-          setProduct(null);
-          setLoading(false);
-          return;
-      }
-      setLoading(true);
-      fetch(`/api/products/${encodeURIComponent(sku)}`)
-          .then((res) => (res.ok ? res.json() : null))
-          .then((data) => {
-              setProduct(data);
-              setSelectedImage(0);
-          })
-          .catch(() => setProduct(null))
-          .finally(() => setLoading(false));
-  }, [sku]);
+    useEffect(() => {
+        if (!sku) {
+            setProduct(null);
+            setLoading(false);
+            return;
+        }
+
+        let isCancelled = false;
+
+        const loadProduct = async () => {
+            setLoading(true);
+            setProductError("");
+
+            try {
+                const res = await fetch(`/api/products/${encodeURIComponent(sku)}`);
+
+                if (res.status === 404) {
+                    if (!isCancelled) {
+                        setProduct(null);
+                        setProductError("Product not found.");
+                    }
+                    return;
+                }
+
+                if (!res.ok) {
+                    throw new Error(`Failed to load product (${res.status})`);
+                }
+
+                const data = await res.json();
+                if (!isCancelled) {
+                    setProduct(data);
+                    setSelectedImage(0);
+                }
+            } catch {
+                if (!isCancelled) {
+                    setProduct(null);
+                    setProductError("Unable to load product details right now.");
+                }
+            } finally {
+                if (!isCancelled) {
+                    setLoading(false);
+                }
+            }
+        };
+
+        loadProduct();
+
+        return () => {
+            isCancelled = true;
+        };
+    }, [sku]);
 
     if (loading) {
         return (
