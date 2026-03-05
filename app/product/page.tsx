@@ -115,7 +115,7 @@ export default function ProductPage() {
             </Button>
           </Link>
           <Card className="p-8">
-            <p className="text-center text-muted-foreground">Product not found</p>
+            <p className="text-center text-muted-foreground">{productError || "Product not found"}</p>
           </Card>
         </div>
       </div>
