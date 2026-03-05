@@ -10,6 +10,7 @@ export interface Product {
   retailerSku: string;
   categoryId: number;
   subCategoryName: string;
+  retailPrice: number;
 }
 
 interface RawProduct extends Omit<Product, 'imageUrls'> {
@@ -59,8 +60,8 @@ export class ProductService {
       );
     }
 
-    const offset = filters?.offset || 0;
-    const limit = filters?.limit || filtered.length;
+    const offset = filters?.offset ?? 0;
+    const limit = filters?.limit ?? filtered.length;
 
     return filtered.slice(offset, offset + limit);
   }
