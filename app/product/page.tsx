@@ -22,20 +22,46 @@ interface Product {
 
 export default function ProductPage() {
   const searchParams = useSearchParams();
-  const productParam = searchParams.get('product');
+  // const productParam = searchParams.get('product');
+  const sku = searchParams.get('sku');
   const [product, setProduct] = useState<Product | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (productParam) {
-      try {
-        const parsedProduct = JSON.parse(productParam);
-        setProduct(parsedProduct);
-      } catch (error) {
-        console.error('Failed to parse product data:', error);
+      if (!sku) {
+          setProduct(null);
+          setLoading(false);
+          return;
       }
+      setLoading(true);
+      fetch(`/api/products/${encodeURIComponent(sku)}`)
+          .then((res) => (res.ok ? res.json() : null))
+          .then((data) => {
+              setProduct(data);
+              setSelectedImage(0);
+          })
+          .catch(() => setProduct(null))
+          .finally(() => setLoading(false));
+  }, [sku]);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-background">
+                <div className="container mx-auto px-4 py-8">
+                    <Link href="/">
+                        <Button variant="ghost" className="mb-4">
+                            <ArrowLeft className="mr-2 h-4 w-4" />
+                            Back to Products
+                        </Button>
+                    </Link>
+                    <Card className="p-8">
+                        <p className="text-center text-muted-foreground">Loading product...</p>
+                    </Card>
+                </div>
+            </div>
+        );
     }
-  }, [productParam]);
 
   const formattedPrice = new Intl.NumberFormat('en-US', {
       style: 'currency',
