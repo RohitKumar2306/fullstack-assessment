@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -19,24 +19,42 @@ interface Product {
   retailerSku: string;
 }
 
-export default function ProductPage() {
+function ProductDetail() {
   const searchParams = useSearchParams();
-  const productParam = searchParams.get('product');
+  const sku = searchParams.get('sku');
   const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);
 
   useEffect(() => {
-    if (productParam) {
-      try {
-        const parsedProduct = JSON.parse(productParam);
-        setProduct(parsedProduct);
-      } catch (error) {
-        console.error('Failed to parse product data:', error);
-      }
+    if (!sku) {
+      setLoading(false);
+      setError('No product SKU provided');
+      return;
     }
-  }, [productParam]);
 
-  if (!product) {
+    setLoading(true);
+    setError(null);
+
+    fetch(`/api/products/${encodeURIComponent(sku)}`)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error('Product not found');
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setProduct(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, [sku]);
+
+  if (loading) {
     return (
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
@@ -47,7 +65,27 @@ export default function ProductPage() {
             </Button>
           </Link>
           <Card className="p-8">
-            <p className="text-center text-muted-foreground">Product not found</p>
+            <p className="text-center text-muted-foreground">Loading product...</p>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8">
+          <Link href="/">
+            <Button variant="ghost" className="mb-4">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Products
+            </Button>
+          </Link>
+          <Card className="p-8">
+            <p className="text-center text-muted-foreground">
+              {error || 'Product not found'}
+            </p>
           </Card>
         </div>
       </div>
@@ -116,7 +154,7 @@ export default function ProductPage() {
               <p className="text-sm text-muted-foreground">SKU: {product.retailerSku}</p>
             </div>
 
-            {product.featureBullets.length > 0 && (
+            {product.featureBullets && product.featureBullets.length > 0 && (
               <Card>
                 <CardContent className="pt-6">
                   <h2 className="text-lg font-semibold mb-3">Features</h2>
@@ -135,5 +173,23 @@ export default function ProductPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ProductPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background">
+          <div className="container mx-auto px-4 py-8">
+            <Card className="p-8">
+              <p className="text-center text-muted-foreground">Loading product...</p>
+            </Card>
+          </div>
+        </div>
+      }
+    >
+      <ProductDetail />
+    </Suspense>
   );
 }
