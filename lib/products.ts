@@ -12,6 +12,10 @@ export interface Product {
   subCategoryName: string;
 }
 
+interface RawProduct extends Omit<Product, 'imageUrls'> {
+    imageUrls?: string[];
+}
+
 export interface ProductFilters {
   category?: string;
   subCategory?: string;
@@ -24,7 +28,10 @@ export class ProductService {
   private products: Product[];
 
   constructor() {
-    this.products = productsData as Product[];
+      this.products = (productsData as RawProduct[]).map((product) => ({
+          ...product,
+          imageUrls: Array.isArray(product.imageUrls) ? product.imageUrls : [],
+      }));
   }
 
   getAll(filters?: ProductFilters): Product[] {
