@@ -318,9 +318,9 @@ export default function Home() {
                       </CardDescription>
                     </CardContent>
                     <CardFooter>
-                      <Button variant="outline" className="w-full">
+                      <span className="w-full rounded-md border border-input bg-background px-4 py-2 text-center text-sm font-medium">
                         View Details
-                      </Button>
+                      </span>
                     </CardFooter>
                   </Card>
                 </Link>
